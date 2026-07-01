@@ -6,6 +6,7 @@ import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './config/logger';
 import authRoutes from './modules/auth/auth.routes';
+import doctorsRoutes from './modules/doctors/doctors.routes';
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.get('/health', (_req, res) => {
 
 // ── API routes ────────────────────────────────────────────────────────────────
 app.use('/auth', authLimiter, authRoutes);
+app.use('/doctors', doctorsRoutes);
 
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
