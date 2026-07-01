@@ -1,11 +1,11 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import { AuthenticatedRequest, JwtPayload } from '../types';
 
 export const authenticate = (
-  req: AuthenticatedRequest,
+  req: Request,
   _res: Response,
   next: NextFunction
 ): void => {
@@ -27,7 +27,7 @@ export const authenticate = (
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
     // ── Attach user to request — available in all downstream middleware ───────
-    req.user = {
+    (req as AuthenticatedRequest).user = {
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,

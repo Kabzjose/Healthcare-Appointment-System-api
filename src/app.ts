@@ -5,18 +5,16 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './config/logger';
-
-// Route modules
 import authRoutes from './modules/auth/auth.routes';
 
 const app = express();
 
-// ── Security middleware ────────────────────────────────────────────────────────
-app.use(helmet()); // Sets X-Content-Type-Options, X-Frame-Options, etc.
+
+app.use(helmet()); 
 
 app.use(
   cors({
-    origin: env.ALLOWED_ORIGINS.split(','),
+    origin: env.CLIENT_URL,
     credentials: true,           // allow cookies / auth headers
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -63,13 +61,8 @@ app.get('/health', (_req, res) => {
 });
 
 // ── API routes ────────────────────────────────────────────────────────────────
-const API_PREFIX = `/api/${env.API_VERSION}`;
+app.use('/auth', authLimiter, authRoutes);
 
-app.use(`${API_PREFIX}/auth`, authLimiter, authRoutes);
-// Phase 1 — remaining routes mounted as we build them:
-// app.use(`${API_PREFIX}/users`, usersRoutes);
-// app.use(`${API_PREFIX}/doctors`, doctorsRoutes);
-// app.use(`${API_PREFIX}/appointments`, appointmentsRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((_req, res) => {

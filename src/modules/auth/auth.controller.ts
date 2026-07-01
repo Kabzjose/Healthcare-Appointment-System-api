@@ -10,25 +10,25 @@ import {
   ChangePasswordInput,
 } from './auth.schemas';
 
-// ── POST /api/v1/auth/register ────────────────────────────────────────────────
+// ── POST /auth/register ───────────────────────────────────────────────────────
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.register(req.body as RegisterInput);
   return ApiResponse.created(res, 'Account created successfully', result);
 });
 
-// ── POST /api/v1/auth/login ───────────────────────────────────────────────────
+// ── POST /auth/login ──────────────────────────────────────────────────────────
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.login(req.body as LoginInput);
   return ApiResponse.ok(res, 'Login successful', result);
 });
 
-// ── POST /api/v1/auth/refresh ─────────────────────────────────────────────────
+// ── POST /auth/refresh ────────────────────────────────────────────────────────
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.refreshToken(req.body as RefreshTokenInput);
   return ApiResponse.ok(res, 'Token refreshed', result);
 });
 
-// ── POST /api/v1/auth/change-password ────────────────────────────────────────
+// ── POST /auth/change-password ────────────────────────────────────────────────
 // Protected — requires authenticate middleware on the route
 export const changePassword = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -37,7 +37,7 @@ export const changePassword = asyncHandler(
   }
 );
 
-// ── GET /api/v1/auth/me ───────────────────────────────────────────────────────
+// ── GET /auth/me ──────────────────────────────────────────────────────────────
 // Returns the currently authenticated user's info from the token
 export const getMe = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   return ApiResponse.ok(res, 'Authenticated user', {
