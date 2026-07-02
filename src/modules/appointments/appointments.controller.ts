@@ -1,16 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import * as appointmentService from './appointments.service';
 import { AuthenticatedRequest } from '../../types';
 
 // ── Create Appointment ───────────────────────────────────────────────────────
-export const createAppointment = async (
-  req: AuthenticatedRequest,
+export const createAppointment: RequestHandler = async (
+  req,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const patientId = req.user.userId;
-    const appointment = await appointmentService.createAppointment(patientId, req.body);
+    const authReq = req as AuthenticatedRequest;
+    const patientId = authReq.user.userId;
+    const appointment = await appointmentService.createAppointment(patientId, authReq.body);
     
     res.status(201).json({
       success: true,
@@ -22,14 +23,15 @@ export const createAppointment = async (
 };
 
 // ── Cancel Appointment ───────────────────────────────────────────────────────
-export const cancelAppointment = async (
-  req: AuthenticatedRequest,
+export const cancelAppointment: RequestHandler = async (
+  req,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const patientId = req.user.userId;
-    const { id } = req.params;
+    const authReq = req as AuthenticatedRequest;
+    const patientId = authReq.user.userId;
+    const { id } = authReq.params;
     const appointmentId = Array.isArray(id) ? id[0] : id;
     
     const appointment = await appointmentService.cancelAppointment(appointmentId, patientId);
@@ -44,19 +46,20 @@ export const cancelAppointment = async (
 };
 
 // ── Update Status (Doctor) ───────────────────────────────────────────────────
-export const updateAppointmentStatus = async (
-  req: AuthenticatedRequest,
+export const updateAppointmentStatus: RequestHandler = async (
+  req,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const doctorId = req.user.userId; // Assuming this is the doctor's profile ID or user ID mapped correctly
-    const { id } = req.params;
+    const authReq = req as AuthenticatedRequest;
+    const doctorId = authReq.user.userId; // Assuming this is the doctor's profile ID or user ID mapped correctly
+    const { id } = authReq.params;
     const appointmentId = Array.isArray(id) ? id[0] : id;
     
     // Note: If req.user.id is the user_id and not the profile_id, 
     // you might need to fetch the profile_id first like in the doctors module.
-    const appointment = await appointmentService.updateAppointmentStatus(appointmentId, doctorId, req.body);
+    const appointment = await appointmentService.updateAppointmentStatus(appointmentId, doctorId, authReq.body);
     
     res.status(200).json({
       success: true,
@@ -68,16 +71,17 @@ export const updateAppointmentStatus = async (
 };
 
 // ── List Appointments ────────────────────────────────────────────────────────
-export const getMyAppointments = async (
-  req: AuthenticatedRequest,
+export const getMyAppointments: RequestHandler = async (
+  req,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const userId = req.user.userId;
-    const role = req.user.role;
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user.userId;
+    const role = authReq.user.role;
     
-    const result = await appointmentService.listAppointments(userId, role, req.query as any);
+    const result = await appointmentService.listAppointments(userId, role, authReq.query as any);
     
     res.status(200).json({
       success: true,
@@ -89,15 +93,16 @@ export const getMyAppointments = async (
 };
 
 // ── Get Single Appointment ───────────────────────────────────────────────────
-export const getAppointmentById = async (
-  req: AuthenticatedRequest,
+export const getAppointmentById: RequestHandler = async (
+  req,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const userId = req.user.userId;
-    const role = req.user.role;
-    const { id } = req.params;
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user.userId;
+    const role = authReq.user.role;
+    const { id } = authReq.params;
     const appointmentId = Array.isArray(id) ? id[0] : id;
     
     const appointment = await appointmentService.getAppointmentById(appointmentId, userId, role);

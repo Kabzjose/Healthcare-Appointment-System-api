@@ -17,8 +17,7 @@ export const authenticate = (
       throw ApiError.unauthorized('No token provided');
     }
 
-    const token = authHeader.split(' ')[1]; // "Bearer <token>" → "<token>"
-
+    const token = authHeader.split(' ')[1]; 
     if (!token) {
       throw ApiError.unauthorized('No token provided');
     }
