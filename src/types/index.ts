@@ -94,3 +94,10 @@ export interface PaginatedResult<T> {
     totalPages: number;
   };
 }
+
+export interface AppointmentWithDetails extends AppointmentRow {
+  patient_name: string;
+  patient_email: string;
+  doctor_name: string;
+  specialization: string;
+}

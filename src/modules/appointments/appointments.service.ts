@@ -1,36 +1,12 @@
 import { db, withTransaction } from '../../database/db';
 import { ApiError } from '../../utils/ApiError';
 import { logger } from '../../config/logger';
-import { PaginatedResult } from '../../types';
+import { PaginatedResult ,AppointmentRow, AppointmentWithDetails } from '../../types';
 import {
   CreateAppointmentInput,
   UpdateAppointmentStatusInput,
   ListAppointmentsQuery,
 } from './appointments.schema';
-
-// ── Interfaces ───────────────────────────────────────────────────────────────
-interface AppointmentRow {
-  id: string;
-  patient_id: string;
-  doctor_id: string;
-  availability_slot_id: string;
-  appointment_date: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  reason: string | null;
-  notes: string | null;
-  consultation_fee: string;
-  created_at: Date;
-  updated_at: Date;
-}
-
-interface AppointmentWithDetails extends AppointmentRow {
-  patient_name: string;
-  patient_email: string;
-  doctor_name: string;
-  specialization: string;
-}
 
 // ── Create Appointment (Patient) ─────────────────────────────────────────────
 export const createAppointment = async (
