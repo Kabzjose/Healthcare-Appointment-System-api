@@ -7,6 +7,7 @@ import {
   UpdateAppointmentStatusInput,
   ListAppointmentsQuery,
 } from './appointments.schema';
+import { ca } from 'zod/locales';
 
 // ── Create Appointment (Patient) ─────────────────────────────────────────────
 export const createAppointment = async (
@@ -62,30 +63,53 @@ export const createAppointment = async (
     // Insert the appointment
     // Note: The DB unique constraint (doctor_id, availability_slot_id, appointment_date) 
     // will automatically prevent the doctor from being double-booked for this exact slot.
-    const result = await client.query<AppointmentRow>(
-      `INSERT INTO appointments (
-         patient_id, doctor_id, availability_slot_id, appointment_date, 
-         start_time, end_time, reason, consultation_fee
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
-        patientId,
-        input.doctor_id,
-        input.availability_slot_id,
-        input.appointment_date,
-        slot.start_time,
-        slot.end_time,
-        input.reason ?? null,
-        slot.consultation_fee,
-      ]
-    );
+   try {
+  const result = await client.query<AppointmentRow>(
+    `INSERT INTO appointments (
+       patient_id, doctor_id, availability_slot_id, appointment_date, 
+       start_time, end_time, reason, consultation_fee
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING *`,
+    [
+      patientId,
+      input.doctor_id,
+      input.availability_slot_id,
+      input.appointment_date,
+      slot.start_time,
+      slot.end_time,
+      input.reason ?? null,
+      slot.consultation_fee,
+    ]
+  );
 
-    return result.rows[0];
+  const appointment = result.rows[0];
+
+  // Log successfully BEFORE returning the value
+  logger.info('Appointment created', { 
+    appointmentId: appointment.id, 
+    patientId 
   });
 
-  logger.info('Appointment created', { appointmentId: appointment.id, patientId });
+  return appointment;
+
+} catch (err: any) {
+   if (
+    err.code === '23505' &&
+    err.constraint === 'appointments_doctor_id_availability_slot_id_appointment_date_key'
+  ) {
+    throw ApiError.conflict(
+      'This slot has already been booked by another patient.'
+    );
+  }
+  throw err;
+}
+
+  });
+
   return appointment;
 };
+
+  
 
 // ── Cancel Appointment (Patient) ─────────────────────────────────────────────
 export const cancelAppointment = async (
