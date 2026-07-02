@@ -32,7 +32,7 @@ export const createAppointment = async (
      WHERE s.id = $1 
        AND s.doctor_id = $2 
        AND s.is_active = true
-       AND TRIM(TO_CHAR($3::date, 'Day')) = s.day_of_week`,
+       AND TRIM(TO_CHAR($3::date, 'Day')) = LOWER(s.day_of_week::text)`,
     [input.availability_slot_id, input.doctor_id, input.appointment_date]
   );
 

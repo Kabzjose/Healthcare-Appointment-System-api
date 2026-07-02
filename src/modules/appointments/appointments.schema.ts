@@ -2,14 +2,12 @@ import { z } from 'zod';
 
 // ── Create Appointment (Patient) ─────────────────────────────────────────────
 export const createAppointmentSchema = z.object({
-  body: z.object({
-    doctor_id: z.string().uuid('Invalid doctor ID format'),
-    availability_slot_id: z.string().uuid('Invalid slot ID format'),
-    appointment_date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-    reason: z.string().max(500).optional(),
-  }),
+  doctor_id: z.string().uuid('Invalid doctor ID format'),
+  availability_slot_id: z.string().uuid('Invalid slot ID format'),
+  appointment_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  reason: z.string().max(500).optional(),
 });
 
 // ── Update Status (Doctor) ───────────────────────────────────────────────────
@@ -37,6 +35,6 @@ export const listAppointmentsSchema = z.object({
 });
 
 // ── Inferred Types ───────────────────────────────────────────────────────────
-export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>['body'];
+export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 export type UpdateAppointmentStatusInput = z.infer<typeof updateAppointmentStatusSchema>['body'];
 export type ListAppointmentsQuery = z.infer<typeof listAppointmentsSchema>['query'];

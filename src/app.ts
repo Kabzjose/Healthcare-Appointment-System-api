@@ -48,7 +48,7 @@ const authLimiter = rateLimit({
 app.use(limiter);
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '10kb' }));       // reject bodies over 10kb
+app.use(express.json());       
 app.use(express.urlencoded({ extended: true }));
 
 // ── Request logging ───────────────────────────────────────────────────────────
