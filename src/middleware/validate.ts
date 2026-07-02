@@ -1,27 +1,81 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema } from 'zod';
-import { ParsedQs } from 'qs'; // 1. Import ParsedQs from the query string utility library
+import { ParsedQs } from 'qs';
+import { ZodTypeAny } from 'zod';
 
-export const validate = (schema: ZodSchema) => {
+type RequestPayload = {
+  body: unknown;
+  params: unknown;
+  query: unknown;
+};
+
+const runValidation = (
+  schema: ZodTypeAny,
+  payload: unknown
+): { body?: unknown; params?: unknown; query?: unknown } | null => {
+  const result = schema.safeParse(payload);
+
+  if (!result.success) {
+    return null;
+  }
+
+  return result.data as { body?: unknown; params?: unknown; query?: unknown };
+};
+
+const applyValidatedData = (
+  req: Request,
+  validated: { body?: unknown; params?: unknown; query?: unknown }
+): void => {
+  if (validated.body !== undefined) req.body = validated.body;
+  if (validated.params !== undefined) req.params = validated.params as Record<string, string>;
+  if (validated.query !== undefined) req.query = validated.query as ParsedQs;
+};
+
+const createValidator = (
+  schema: ZodTypeAny,
+  source: 'body' | 'query' | 'params' | 'request'
+) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      req.body = schema.parse(req.body);
-      next();
+      const payloads: Record<typeof source, unknown> = {
+        body: req.body,
+        query: req.query,
+        params: req.params,
+        request: {
+          body: req.body,
+          params: req.params,
+          query: req.query,
+        } satisfies RequestPayload,
+      };
+
+      const preferred = runValidation(schema, payloads[source]);
+
+      if (preferred) {
+        applyValidatedData(req, preferred);
+        next();
+        return;
+      }
+
+      if (source === 'request') {
+        const fallback = runValidation(schema, req.body);
+
+        if (fallback) {
+          applyValidatedData(req, fallback);
+          next();
+          return;
+        }
+      }
+
+      next(new Error('Validation failed'));
     } catch (err) {
       next(err);
     }
   };
 };
 
-// For validating query params (e.g. ?page=1&limit=10)
-export const validateQuery = (schema: ZodSchema) => {
-  return (req: Request, _res: Response, next: NextFunction): void => {
-    try {
-      // 2. Cast the output to ParsedQs to satisfy Express
-      req.query = schema.parse(req.query) as ParsedQs;
-      next();
-    } catch (err) {
-      next(err);
-    }
-  };
-};
+export const validate = (schema: ZodTypeAny) => createValidator(schema, 'request');
+
+export const validateBody = (schema: ZodTypeAny) => createValidator(schema, 'body');
+
+export const validateQuery = (schema: ZodTypeAny) => createValidator(schema, 'query');
+
+export const validateParams = (schema: ZodTypeAny) => createValidator(schema, 'params');

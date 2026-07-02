@@ -24,16 +24,18 @@ export const createAppointment = async (
     throw ApiError.badRequest('Appointments must be booked at least 3 days in advance.');
   }
 
-  // 2. Fetch slot details and verify it belongs to the doctor & matches the day of the week
+  const appointmentDay = new Date(`${input.appointment_date}T00:00:00Z`).toLocaleDateString('en-US', {
+    weekday: 'long',
+    timeZone: 'UTC',
+  }).toLowerCase();
+
+  // 2. Fetch slot details first, then validate the exact failure reason
   const slotResult = await db.query<any>(
-    `SELECT s.*, dp.consultation_fee 
+    `SELECT s.*, dp.consultation_fee
      FROM availability_slots s
      JOIN doctor_profiles dp ON dp.id = s.doctor_id
-     WHERE s.id = $1 
-       AND s.doctor_id = $2 
-       AND s.is_active = true
-       AND TRIM(TO_CHAR($3::date, 'Day')) = LOWER(s.day_of_week::text)`,
-    [input.availability_slot_id, input.doctor_id, input.appointment_date]
+     WHERE s.id = $1`,
+    [input.availability_slot_id]
   );
 
   if (!slotResult.rows[0]) {
@@ -41,6 +43,18 @@ export const createAppointment = async (
   }
 
   const slot = slotResult.rows[0];
+
+  if (slot.doctor_id !== input.doctor_id) {
+    throw ApiError.badRequest('The selected slot does not belong to the chosen doctor.');
+  }
+
+  if (!slot.is_active) {
+    throw ApiError.notFound('The selected slot is inactive.');
+  }
+
+  if (appointmentDay !== slot.day_of_week) {
+    throw ApiError.badRequest('The selected appointment date does not match this slot day.');
+  }
 
   // 3. Use a transaction to prevent double-booking
   const appointment = await withTransaction(async (client) => {
